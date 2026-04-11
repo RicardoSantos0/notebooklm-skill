@@ -1,0 +1,66 @@
+# NotebookLM Notebook Registry
+# All agents query across the full library (no hardcoded notebook_id).
+# This file is the authoritative routing reference.
+# Updated: 2026-04-11
+
+notebooks:
+
+  - id: ai-agents-&-multi-agent-systems
+    name: AI Agents & Multi-Agent Systems
+    domains: [agent-design, orchestration, multi-agent, mcp, memory, security, reliability, cost-optimization]
+    best_for: [master_orchestrator, risk_advisor, quality_advisor, efficiency_advisor, evaluator_agent]
+    description: >
+      Production AI agent design: MCP/A2A/ACP/ANP protocols, LangGraph/CrewAI/AutoGen
+      frameworks, memory architectures, security/HITL, Text-to-SQL, token cost reduction
+      (70-85%). Primary reference for MAS architectural decisions.
+
+  - id: agentic-ai-systems---development-&-orchestration
+    name: Agentic AI Systems - Development & Orchestration
+    domains: [agent-design, llm, evaluation, safety, guardrails, benchmarks, prompt-engineering]
+    best_for: [evaluator_agent, quality_advisor, domain_expert, spawner_agent]
+    description: >
+      Agentic AI development: ReAct patterns, prompt injection defenses, evaluation
+      benchmarks, safety guardrails. Complements the multi-agent systems notebook with
+      lower-level agent implementation patterns.
+
+  - id: database-systems-&-ai-integrated-dbms
+    name: Database Systems & AI-Integrated DBMS
+    domains: [databases, sql, nosql, distributed-systems, vector-databases, rag, query-optimization]
+    best_for: [domain_expert, efficiency_advisor, evaluator_agent]
+    description: >
+      DBMS internals, cloud-native systems (Spanner, Snowflake), learned/autonomous
+      databases, vector DBs for RAG/LLM. Primary reference for storage and query
+      architecture decisions in the MAS.
+
+  - id: ml-&-deep-learning-comprehensive-reference
+    name: ML & Deep Learning Comprehensive Reference
+    domains: [machine-learning, deep-learning, pytorch, neural-networks, transformers, llm, mathematics]
+    best_for: [domain_expert, evaluator_agent]
+    description: >
+      Comprehensive ML/DL reference: math foundations, classical algorithms, CNNs,
+      RNNs, Transformers, LLMs, GANs, Diffusion Models, PyTorch. Background reference
+      for ML-adjacent decisions.
+
+  - id: performance-management-&-project-governance
+    name: Performance Management & Project Governance
+    domains: [governance, project-management, performance, kpi, okr, agile, pmbok, risk]
+    best_for: [master_orchestrator, quality_advisor, risk_advisor, evaluator_agent, inquirer_agent]
+    description: >
+      Project governance frameworks: PMBOK, PRINCE2, Agile, RACI/DACI/RAPID, RAID logs,
+      KPIs, OKRs. Reference for MAS governance policy, evaluation rubrics, and
+      project management decisions.
+
+  - id: zotero-notion-python-integration
+    name: Zotero-Notion Python Integration
+    domains: [python, api-integration, knowledge-management, sync, notion, research-tools]
+    best_for: [domain_expert, inquirer_agent]
+    description: >
+      Zotero-Notion sync via Python: Notion DataSource API (2025), Pyzotero, Notero,
+      ZoteroToNotion. Niche reference for knowledge management tooling decisions.
+
+routing_strategy:
+  default: query_all_notebooks
+  note: >
+    Agents query the full library by default. The best_for field is advisory only —
+    it guides agents on where to focus follow-up questions, not which notebooks to exclude.
+    Routing will be refined through training feedback as usage data accumulates.
