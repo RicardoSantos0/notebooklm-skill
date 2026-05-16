@@ -1,7 +1,7 @@
 # NotebookLM Notebook Registry
 # All agents query across the full library (no hardcoded notebook_id).
 # This file is the authoritative routing reference.
-# Updated: 2026-04-11
+# Updated: 2026-05-17
 
 notebooks:
 
@@ -57,6 +57,78 @@ notebooks:
     description: >
       Zotero-Notion sync via Python: Notion DataSource API (2025), Pyzotero, Notero,
       ZoteroToNotion. Niche reference for knowledge management tooling decisions.
+
+  - id: ai-powered-automated-grading-in-stem
+    name: AI-Powered Automated Grading in STEM
+    domains: [education, ai-grading, llm-evaluation, pedagogy, assessment, bias, hitl]
+    best_for: [domain_expert, evaluator_agent, quality_advisor]
+    description: >
+      AI-powered automated grading in STEM: AGS architectures, LLM-as-a-Judge paradigm,
+      platform analysis (Gradescope, CodeGrade), bias mitigation, HITL governance, and
+      evaluation benchmarks. Primary reference for autograder design and ML Autograder project.
+
+  - id: ev-charging-infrastructure-2025-2027
+    name: EV Charging Infrastructure 2025-2027
+    domains: [ev-infrastructure, robotics, wireless-charging, policy, energy, retail, v2g]
+    best_for: [domain_expert, risk_advisor]
+    description: >
+      EV charging 2025-2027: robotic/wireless charging automation, ISO 15118/V2G standards,
+      global policy (NEVI, AFIR), AI for predictive maintenance and dynamic pricing,
+      retail strategy. Reference for EV infrastructure decisions.
+
+  - id: architectural-optimization-and-context-management-in-llms
+    name: Architectural Optimization and Context Management in LLMs
+    domains: [llm-architecture, inference-optimization, context-management, kv-cache, performance]
+    best_for: [domain_expert, efficiency_advisor, evaluator_agent]
+    description: >
+      LLM architectural evolution: KV cache optimizations (MLA, FlashAttention-3, PagedAttention),
+      tokenization, prompt caching, RULER benchmark. Deep reference for inference optimization
+      and long-context performance decisions.
+
+  - id: nvidia-cuda-ecosystem-and-blackwell-architecture
+    name: NVIDIA CUDA Ecosystem and Blackwell Architecture
+    domains: [gpu-computing, cuda, parallel-computing, ai-infrastructure, performance-optimization]
+    best_for: [domain_expert, efficiency_advisor]
+    description: >
+      NVIDIA CUDA platform and Blackwell GPU architecture: programming model, thread hierarchy,
+      memory management, Tensor Cores, NVFP4, ROCm/OpenCL comparisons. Reference for
+      GPU computing and AI infrastructure decisions.
+
+  - id: architecting-multi-agent-systems-for-enterprise-production
+    name: Architecting Multi-Agent Systems for Enterprise Production
+    domains: [enterprise-ai, multi-agent, orchestration, fault-tolerance, deployment, a2a, mcp]
+    best_for: [master_orchestrator, domain_expert, risk_advisor, efficiency_advisor]
+    description: >
+      Enterprise MAS production architecture: A2A/MCP protocols, LangGraph/CrewAI/AutoGen/
+      Claude Agent SDK comparisons, fault tolerance, context management, zero-trust security.
+      Complements the AI Agents notebook with enterprise deployment patterns.
+
+  - id: github-repository-governance-and-actions-security-framework
+    name: GitHub Repository Governance and Actions Security Framework
+    domains: [devops, cicd, security, governance, github-actions, supply-chain, sdlc]
+    best_for: [risk_advisor, quality_advisor, domain_expert]
+    description: >
+      GitHub engineering excellence: Actions CI/CD automation, Copilot integration,
+      supply chain security, branching strategies, AI-assisted SDLC. Reference for
+      repository governance, CI pipeline design, and DevSecOps decisions.
+
+  - id: ai-engineering-and-software-architecture-strategies-2026
+    name: AI Engineering and Software Architecture Strategies 2026
+    domains: [software-architecture, ai-engineering, rag, microservices, security, event-driven, finops]
+    best_for: [domain_expert, risk_advisor, efficiency_advisor, evaluator_agent]
+    description: >
+      AI engineering and software architecture 2026: agentic workflow industrialization,
+      microservices vs modular monolith, RAG, DDD, security-by-design, green software,
+      event-driven architecture, FinOps. Broad reference for architecture decisions.
+
+  - id: core-principles-of-modern-ui/ux-design
+    name: Core Principles of Modern UI/UX Design
+    domains: [ui-design, ux, accessibility, mobile, design-systems, wcag, cognitive-load]
+    best_for: [domain_expert, quality_advisor]
+    description: >
+      UI/UX design principles 2025-2026: usability heuristics, Apple HIG, Material Design 3,
+      mobile ergonomics, progressive disclosure, cognitive load, WCAG 2.2. Reference for
+      frontend design decisions and accessibility compliance.
 
 routing_strategy:
   default: query_all_notebooks
