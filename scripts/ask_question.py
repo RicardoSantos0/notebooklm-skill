@@ -117,6 +117,24 @@ def ask_notebooklm(question: str, notebook_url: str, headless: bool = True) -> s
         # Wait for response (MCP approach: poll for stable text)
         print("  ⏳ Waiting for answer...")
 
+        # Markers that indicate NotebookLM's auto-generated notebook overview /
+        # intro greeting rather than an actual chat answer. When the latest
+        # matched element ends with these, we keep polling so the real streamed
+        # answer can arrive and overtake it.
+        OVERVIEW_MARKERS = (
+            "Key Topics:",
+            "This notebook explores",
+            "This notebook outlines",
+            "This notebook is a comprehensive",
+            "This notebook provides",
+        )
+
+        def _looks_like_overview(text: str) -> bool:
+            if not text:
+                return True
+            tail = text[-400:]
+            return any(m in tail for m in OVERVIEW_MARKERS)
+
         answer = None
         stable_count = 0
         last_text = None
@@ -132,26 +150,44 @@ def ask_notebooklm(question: str, notebook_url: str, headless: bool = True) -> s
             except:
                 pass
 
-            # Try to find response with MCP selectors
+            # Try to find response with MCP selectors. Prefer the LATEST element
+            # that is not the notebook-overview greeting. If only the overview
+            # is present (chat answer still streaming), keep polling.
+            candidate_text = None
+            _debug_summary = []
             for selector in RESPONSE_SELECTORS:
                 try:
                     elements = page.query_selector_all(selector)
-                    if elements:
-                        # Get last (newest) response
-                        latest = elements[-1]
-                        text = latest.inner_text().strip()
-
-                        if text:
-                            if text == last_text:
-                                stable_count += 1
-                                if stable_count >= 3:  # Stable for 3 polls
-                                    answer = text
-                                    break
-                            else:
-                                stable_count = 0
-                                last_text = text
+                    if not elements:
+                        continue
+                    _debug_summary.append(f"{selector}={len(elements)}")
+                    # Walk newest -> oldest, take first non-overview text.
+                    for el in reversed(elements):
+                        text = (el.inner_text() or "").strip()
+                        if not text:
+                            continue
+                        if _looks_like_overview(text):
+                            continue
+                        candidate_text = text
+                        break
+                    if candidate_text:
+                        break
                 except:
                     continue
+            # One-time debug dump when no candidate found (helps diagnose
+            # whether the wrong panel is being matched or no chat exists yet).
+            if not candidate_text and _debug_summary and stable_count == 0 and last_text is None:
+                print(f"  [debug] candidates: {', '.join(_debug_summary)}")
+
+            if candidate_text:
+                if candidate_text == last_text:
+                    stable_count += 1
+                    if stable_count >= 3:  # Stable for 3 polls
+                        answer = candidate_text
+                        break
+                else:
+                    stable_count = 0
+                    last_text = candidate_text
 
             if answer:
                 break
