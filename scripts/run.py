@@ -86,9 +86,15 @@ def main():
     # Build command
     cmd = [str(venv_python), str(script_path)] + script_args
 
+    # Force UTF-8 stdio in the child so emoji/status prints don't crash on
+    # Windows consoles using cp1252 (the scripts print 📚/⚠️/✅ etc).
+    child_env = dict(os.environ)
+    child_env.setdefault("PYTHONIOENCODING", "utf-8")
+    child_env.setdefault("PYTHONUTF8", "1")
+
     # Run the script
     try:
-        result = subprocess.run(cmd)
+        result = subprocess.run(cmd, env=child_env)
         sys.exit(result.returncode)
     except KeyboardInterrupt:
         print("\n⚠️ Interrupted by user")
