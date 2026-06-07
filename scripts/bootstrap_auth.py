@@ -30,7 +30,7 @@ def get_encryption_key(local_state_path: Path) -> bytes:
     except ImportError:
         print("Installing pywin32...")
         import subprocess
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pywin32"], capture_output=True)
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pywin32"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         import win32crypt
 
     # Local State is in "User Data", two levels up from "Network/Cookies"
@@ -52,7 +52,7 @@ def decrypt_cookie(encrypted_value: bytes, key: bytes) -> str:
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     except ImportError:
         import subprocess
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "cryptography"], capture_output=True)
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "cryptography"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
     if not encrypted_value or len(encrypted_value) < 15:
