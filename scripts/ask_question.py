@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from auth_manager import AuthManager
 from notebook_manager import NotebookLibrary
-from config import QUERY_INPUT_SELECTORS, RESPONSE_SELECTORS
+from config import QUERY_INPUT_SELECTORS
 from browser_utils import BrowserFactory, StealthUtils
 
 
@@ -112,6 +112,19 @@ def ask_notebooklm(question: str, notebook_url: str, headless: bool = True) -> s
         input_selector = QUERY_INPUT_SELECTORS[0]
         StealthUtils.human_type(page, input_selector, question)
 
+        # ip-ks-002: anchor extraction to the answer that appears AFTER this submission.
+        # NotebookLM's chat panel accumulates prior answers (e.g. notebook_manager's discovery
+        # queries leave an overview + JSON-metadata answer), so taking the "latest" element can
+        # return a stale answer. Record the pre-submit answer count and only accept a newer one.
+        ANSWER_SELECTOR = ".to-user-container .message-text-content"
+        def _answer_texts():
+            try:
+                return [(e.inner_text() or "").strip()
+                        for e in page.query_selector_all(ANSWER_SELECTOR)]
+            except Exception:
+                return []
+        pre_answer_count = len(_answer_texts())
+
         # Submit
         print("  📤 Submitting...")
         page.keyboard.press("Enter")
@@ -119,83 +132,55 @@ def ask_notebooklm(question: str, notebook_url: str, headless: bool = True) -> s
         # Small pause
         StealthUtils.random_delay(500, 1500)
 
-        # Wait for response (MCP approach: poll for stable text)
+        # Wait for the NEW answer (ip-ks-002): poll until a fresh answer message appears
+        # (answer count grows past the pre-submit count), then take the newest and wait for
+        # its streamed text to stabilise.
         print("  ⏳ Waiting for answer...")
-
-        # Markers that indicate NotebookLM's auto-generated notebook overview /
-        # intro greeting rather than an actual chat answer. When the latest
-        # matched element ends with these, we keep polling so the real streamed
-        # answer can arrive and overtake it.
-        OVERVIEW_MARKERS = (
-            "Key Topics:",
-            "This notebook explores",
-            "This notebook outlines",
-            "This notebook is a comprehensive",
-            "This notebook provides",
-        )
-
-        def _looks_like_overview(text: str) -> bool:
-            if not text:
-                return True
-            tail = text[-400:]
-            return any(m in tail for m in OVERVIEW_MARKERS)
 
         answer = None
         stable_count = 0
         last_text = None
-        deadline = time.time() + 240  # ip-ks-002: was 120 — NotebookLM answers can stream slowly
+        deadline = time.time() + 240  # NotebookLM answers can stream slowly
 
         while time.time() < deadline:
-            # Check if NotebookLM is still thinking (most reliable indicator)
+            # Still thinking? keep waiting.
             try:
                 thinking_element = page.query_selector('div.thinking-message')
                 if thinking_element and thinking_element.is_visible():
                     time.sleep(1)
                     continue
-            except:
+            except Exception:
                 pass
 
-            # Try to find response with MCP selectors. Prefer the LATEST element
-            # that is not the notebook-overview greeting. If only the overview
-            # is present (chat answer still streaming), keep polling.
+            texts = _answer_texts()
+            # Accept only an answer that appeared AFTER our question (count grew), and walk
+            # newest-first skipping NotebookLM's persistent notebook-overview summary card —
+            # it renders as a trailing answer element but is not a reply to our question.
             candidate_text = None
-            _debug_summary = []
-            for selector in RESPONSE_SELECTORS:
-                try:
-                    elements = page.query_selector_all(selector)
-                    if not elements:
+            if len(texts) > pre_answer_count:
+                for t in reversed(texts):
+                    if not t:
                         continue
-                    _debug_summary.append(f"{selector}={len(elements)}")
-                    # Walk newest -> oldest, take first non-overview text.
-                    for el in reversed(elements):
-                        text = (el.inner_text() or "").strip()
-                        if not text:
-                            continue
-                        if _looks_like_overview(text):
-                            continue
-                        candidate_text = text
-                        break
-                    if candidate_text:
-                        break
-                except:
-                    continue
-            # One-time debug dump when no candidate found (helps diagnose
-            # whether the wrong panel is being matched or no chat exists yet).
-            if not candidate_text and _debug_summary and stable_count == 0 and last_text is None:
-                print(f"  [debug] candidates: {', '.join(_debug_summary)}")
+                    low = t.lower()
+                    if ("sources in this notebook" in low
+                            or "this notebook provide" in low
+                            or "this notebook explore" in low
+                            or "this notebook is a comprehensive" in low
+                            or "this notebook outlines" in low
+                            or "topics are covered" in low):
+                        continue
+                    candidate_text = t
+                    break
 
             if candidate_text:
                 if candidate_text == last_text:
                     stable_count += 1
-                    if stable_count >= 3:  # Stable for 3 polls
+                    if stable_count >= 3:  # stable for 3 polls -> streaming finished
                         answer = candidate_text
                         break
                 else:
                     stable_count = 0
                     last_text = candidate_text
-
-            if answer:
-                break
 
             time.sleep(1)
 
