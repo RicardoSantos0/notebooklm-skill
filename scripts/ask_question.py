@@ -37,6 +37,63 @@ FOLLOW_UP_REMINDER = (
 )
 
 
+def _clear_chat(page) -> bool:
+    """Delete NotebookLM's persisted chat history before asking (ip-ks-002).
+
+    NotebookLM now persists chat between sessions, so prior answers — including the
+    notebook_manager discovery queries (overview + JSON metadata) — pollute the conversation
+    and get mis-extracted as the answer. Clearing first guarantees our reply is the only one.
+    Non-fatal: returns False and continues if any step can't be found.
+    """
+    # 1. Open the chat-options (more_vert) menu.
+    opened = False
+    for sel in ('button[aria-label="Opções do chat"]', 'button[aria-label="Chat options"]'):
+        try:
+            b = page.query_selector(sel)
+            if b and b.is_visible():
+                b.click()
+                opened = True
+                break
+        except Exception:
+            continue
+    if not opened:
+        return False
+    time.sleep(1)
+
+    # 2. Click the "delete chat history" item (locale-tolerant text match).
+    deleted = False
+    try:
+        for it in page.query_selector_all('[role="menuitem"], .mat-mdc-menu-item'):
+            t = (it.inner_text() or "").lower()
+            if ("histórico do chat" in t or "historico do chat" in t
+                    or "delete chat" in t or "chat history" in t):
+                it.click()
+                deleted = True
+                break
+    except Exception:
+        pass
+    if not deleted:
+        try:
+            page.keyboard.press("Escape")
+        except Exception:
+            pass
+        return False
+    time.sleep(1)
+
+    # 3. Confirm if a dialog appears.
+    try:
+        for b in page.query_selector_all('[role="dialog"] button, mat-dialog-container button'):
+            t = (b.inner_text() or "").strip().lower()
+            if any(k in t for k in ("eliminar", "delete", "confirm", "remove", "sim", "yes")):
+                b.click()
+                break
+    except Exception:
+        pass
+    time.sleep(2)
+    print("  🧹 cleared persisted chat history")
+    return True
+
+
 def ask_notebooklm(question: str, notebook_url: str, headless: bool = True) -> str:
     """
     Ask a question to NotebookLM
@@ -83,6 +140,15 @@ def ask_notebooklm(question: str, notebook_url: str, headless: bool = True) -> s
             page.wait_for_url(re.compile(r"^https://notebooklm\.google\.com/"), timeout=45000)
         except Exception:
             print("  ⚠️ URL settle slow; continuing (page already navigated)")
+
+        # ip-ks-002: clear the persisted chat first so our reply is the only answer in the
+        # conversation (NotebookLM persists chat between sessions; prior discovery answers
+        # otherwise get mis-extracted). Non-fatal if the control isn't found.
+        time.sleep(3)
+        try:
+            _clear_chat(page)
+        except Exception as _e:
+            print(f"  ⚠️ clear-chat skipped: {_e}")
 
         # Wait for query input (MCP approach)
         print("  ⏳ Waiting for query input...")
