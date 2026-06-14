@@ -74,10 +74,15 @@ def ask_notebooklm(question: str, notebook_url: str, headless: bool = True) -> s
         # Navigate to notebook
         page = context.new_page()
         print("  🌐 Opening notebook...")
-        page.goto(notebook_url, wait_until="domcontentloaded")
+        page.goto(notebook_url, wait_until="domcontentloaded", timeout=60000)
 
-        # Wait for NotebookLM
-        page.wait_for_url(re.compile(r"^https://notebooklm\.google\.com/"), timeout=10000)
+        # Wait for NotebookLM. goto() already navigated to the notebook URL, so this is only a
+        # secondary confirmation — give the heavy SPA room and never hard-fail on it (a slow
+        # URL-settle should not abort an otherwise-loaded page). (ip-ks-002)
+        try:
+            page.wait_for_url(re.compile(r"^https://notebooklm\.google\.com/"), timeout=45000)
+        except Exception:
+            print("  ⚠️ URL settle slow; continuing (page already navigated)")
 
         # Wait for query input (MCP approach)
         print("  ⏳ Waiting for query input...")
@@ -87,7 +92,7 @@ def ask_notebooklm(question: str, notebook_url: str, headless: bool = True) -> s
             try:
                 query_element = page.wait_for_selector(
                     selector,
-                    timeout=10000,
+                    timeout=20000,  # ip-ks-002: was 10000 — SPA input can be slow to mount
                     state="visible"  # Only check visibility, not disabled!
                 )
                 if query_element:
@@ -138,7 +143,7 @@ def ask_notebooklm(question: str, notebook_url: str, headless: bool = True) -> s
         answer = None
         stable_count = 0
         last_text = None
-        deadline = time.time() + 120  # 2 minutes timeout
+        deadline = time.time() + 240  # ip-ks-002: was 120 — NotebookLM answers can stream slowly
 
         while time.time() < deadline:
             # Check if NotebookLM is still thinking (most reliable indicator)
