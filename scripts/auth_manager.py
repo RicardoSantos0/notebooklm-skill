@@ -80,6 +80,18 @@ class AuthManager:
         if info['state_exists']:
             age_hours = (time.time() - self.state_file.stat().st_mtime) / 3600
             info['state_age_hours'] = age_hours
+            # Honest signal: the rotating __Secure-*PSIDTS cookies are session-bound and are
+            # what Google actually validates. They are frequently lost on save (Playwright
+            # bug #36139) — when absent, the session redirects to login even though the file
+            # exists and is "fresh". Surface this so `status` doesn't falsely claim Yes.
+            try:
+                with open(self.state_file, 'r') as f:
+                    cookies = json.load(f).get('cookies', [])
+                names = {c.get('name', '') for c in cookies}
+                info['cookie_count'] = len(cookies)
+                info['has_rotating_session_cookie'] = any('PSIDTS' in n for n in names)
+            except Exception:
+                pass
 
         return info
 
@@ -325,12 +337,22 @@ def main():
     elif args.command == 'status':
         info = auth.get_auth_info()
         print("\n🔐 Authentication Status:")
-        print(f"  Authenticated: {'Yes' if info['authenticated'] else 'No'}")
+        # 'authenticated' here only means a state file exists — not that the session is live.
+        has_rot = info.get('has_rotating_session_cookie')
+        likely_live = bool(info['authenticated']) and has_rot is not False
+        print(f"  State file present: {'Yes' if info['authenticated'] else 'No'}")
+        print(f"  Likely live session: {'Yes' if likely_live else 'No (refresh needed)'}")
+        if info.get('cookie_count') is not None:
+            print(f"  Cookies: {info['cookie_count']}  · rotating __Secure-*PSIDTS: "
+                  f"{'present' if has_rot else 'MISSING (session will redirect to login)'}")
         if info.get('state_age_hours'):
             print(f"  State age: {info['state_age_hours']:.1f} hours")
         if info.get('authenticated_at_iso'):
             print(f"  Last auth: {info['authenticated_at_iso']}")
         print(f"  State file: {info['state_file']}")
+        if not likely_live:
+            print("  ↳ Refresh: close Brave then `python scripts/run.py bootstrap_auth.py "
+                  "--browser brave` (or --browser chrome if logged in there).")
 
     elif args.command == 'validate':
         if auth.validate_auth():

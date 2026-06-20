@@ -17,21 +17,48 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from config import STATE_FILE, BROWSER_STATE_DIR, AUTH_INFO_FILE, DATA_DIR
 
-GOOGLE_DOMAINS = [".google.com", "google.com", ".notebooklm.google.com", "notebooklm.google.com"]
+GOOGLE_DOMAINS = [
+    ".google.com", "google.com",
+    "accounts.google.com", ".accounts.google.com",
+    ".notebooklm.google.com", "notebooklm.google.com",
+    ".google.pt", "accounts.google.pt",
+]
 
 BRAVE_PROFILE = Path.home() / "AppData/Local/BraveSoftware/Brave-Browser/User Data/Default"
 CHROME_PROFILE = Path.home() / "AppData/Local/Google/Chrome/User Data/Default"
 
 
-def get_encryption_key(local_state_path: Path) -> bytes:
-    """Extract and decrypt the AES key from browser Local State."""
+def _ensure_pywin32():
+    """Import win32crypt, installing pywin32 and registering its DLL dir if needed.
+
+    After `pip install pywin32`, the win32 DLLs live in site-packages/pywin32_system32
+    and are NOT importable until that dir is on the DLL search path — so a same-process
+    import right after install fails. Add the dir explicitly (os.add_dll_directory)."""
+    import os, importlib, subprocess
+    def _add_dll_dir():
+        for sp in sys.path:
+            cand = Path(sp) / "pywin32_system32"
+            if cand.is_dir():
+                try:
+                    os.add_dll_directory(str(cand))
+                except Exception:
+                    pass
+                os.environ["PATH"] = str(cand) + os.pathsep + os.environ.get("PATH", "")
+                return
+    _add_dll_dir()
     try:
-        import win32crypt  # pywin32
+        return importlib.import_module("win32crypt")
     except ImportError:
         print("Installing pywin32...")
-        import subprocess
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pywin32"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        import win32crypt
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pywin32"],
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _add_dll_dir()
+        return importlib.import_module("win32crypt")
+
+
+def get_encryption_key(local_state_path: Path) -> bytes:
+    """Extract and decrypt the AES key from browser Local State."""
+    win32crypt = _ensure_pywin32()
 
     # Local State is in "User Data", two levels up from "Network/Cookies"
     local_state_file = local_state_path.parent.parent.parent / "Local State"
@@ -86,12 +113,18 @@ def extract_cookies(profile_dir: Path, domains: list[str]) -> list[dict]:
     local_state_path = profile_dir / "Network" / "Cookies"  # path used for key lookup
     key = get_encryption_key(local_state_path)
 
-    # Read the locked file using Windows file sharing flags, then open from memory
-    import win32file, win32con, tempfile, shutil
-
-    # First try: direct copy using win32file with full share access
-    tmp_path = Path(tempfile.mktemp(suffix=".db"))
+    # Read the cookie DB while the browser may still be running. Chromium holds an
+    # exclusive lock, so we try, in order:
+    #   1) win32file copy with full share access (works on older Chromium),
+    #   2) SQLite read-only `immutable=1` connection directly on the file — bypasses all
+    #      locking (reads the committed DB; ignores the -wal, which is fine for stable auth
+    #      cookies). This is what lets bootstrap work without closing the browser.
+    import tempfile
+    tmp_path = None
+    conn = None
     try:
+        import win32file, win32con
+        tmp_path = Path(tempfile.mktemp(suffix=".db"))
         handle = win32file.CreateFile(
             str(cookies_db),
             win32con.GENERIC_READ,
@@ -104,12 +137,17 @@ def extract_cookies(profile_dir: Path, domains: list[str]) -> list[dict]:
         data = win32file.ReadFile(handle, cookies_db.stat().st_size)[1]
         win32file.CloseHandle(handle)
         tmp_path.write_bytes(data)
-    except Exception as e:
-        raise RuntimeError(f"Cannot read Cookies database (try closing Brave): {e}")
+        conn = sqlite3.connect(str(tmp_path))
+    except Exception:
+        # Fallback: read-only immutable connection (bypasses Chromium's exclusive lock)
+        if tmp_path is not None:
+            tmp_path.unlink(missing_ok=True)
+            tmp_path = None
+        uri = cookies_db.as_uri() + "?mode=ro&immutable=1"
+        conn = sqlite3.connect(uri, uri=True)
 
     results = []
     try:
-        conn = sqlite3.connect(str(tmp_path))
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
 
@@ -120,9 +158,15 @@ def extract_cookies(profile_dir: Path, domains: list[str]) -> list[dict]:
             domains
         )
 
+        app_bound_failures = 0
         for row in cur.fetchall():
-            value = decrypt_cookie(row["encrypted_value"], key)
+            ev = row["encrypted_value"]
+            value = decrypt_cookie(ev, key)
             if not value:
+                # v20 = Chromium "app-bound encryption": the cookie key is sealed under a
+                # SYSTEM-context DPAPI blob and cannot be unwrapped by a normal user process.
+                if ev and bytes(ev[:3]) == b"v20":
+                    app_bound_failures += 1
                 continue
 
             # Chrome epoch → Unix: Chrome uses microseconds since 1601-01-01
@@ -147,8 +191,16 @@ def extract_cookies(profile_dir: Path, domains: list[str]) -> list[dict]:
             })
 
         conn.close()
+        if not results and app_bound_failures:
+            raise RuntimeError(
+                f"found {app_bound_failures} Google cookies but all are app-bound "
+                "encrypted (v20) — these cannot be decrypted by a user process. "
+                "Cookie extraction won't work on this browser. Use interactive login "
+                "instead:  python scripts/run.py auth_manager.py setup"
+            )
     finally:
-        tmp_path.unlink(missing_ok=True)
+        if tmp_path is not None:
+            tmp_path.unlink(missing_ok=True)
 
     return results
 

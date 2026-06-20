@@ -23,18 +23,41 @@ def get_venv_python():
     return venv_python
 
 
+def _venv_python_works(venv_python: Path) -> bool:
+    """A venv whose interpreter was removed (e.g. a uv-managed Python that got
+    cleaned up) leaves a python.exe shim that fails to launch. Probe it."""
+    if not venv_python.exists():
+        return False
+    try:
+        r = subprocess.run([str(venv_python), "-c", "import sys"],
+                           capture_output=True, timeout=30)
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
 def ensure_venv():
-    """Ensure virtual environment exists"""
+    """Ensure virtual environment exists and its interpreter actually launches."""
     skill_dir = Path(__file__).parent.parent
     venv_dir = skill_dir / ".venv"
     setup_script = skill_dir / "scripts" / "setup_environment.py"
+    venv_python = get_venv_python()
 
-    # Check if venv exists
-    if not venv_dir.exists():
-        print("🔧 First-time setup: Creating virtual environment...")
+    # Rebuild when absent OR when the interpreter is broken (dangling base Python).
+    if not venv_dir.exists() or not _venv_python_works(venv_python):
+        if venv_dir.exists():
+            print("🔧 venv interpreter is broken (dangling base Python); rebuilding...")
+            import time
+            broken = venv_dir.parent / f".venv_broken_{int(time.time())}"
+            try:
+                venv_dir.rename(broken)
+            except Exception:
+                import shutil
+                shutil.rmtree(venv_dir, ignore_errors=True)
+        else:
+            print("🔧 First-time setup: Creating virtual environment...")
         print("   This may take a minute...")
 
-        # Run setup with system Python
         result = subprocess.run([sys.executable, str(setup_script)])
         if result.returncode != 0:
             print("❌ Failed to set up environment")

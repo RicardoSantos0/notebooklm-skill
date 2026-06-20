@@ -141,6 +141,20 @@ def ask_notebooklm(question: str, notebook_url: str, headless: bool = True) -> s
         except Exception:
             print("  ⚠️ URL settle slow; continuing (page already navigated)")
 
+        # Honest auth check: if Google bounced us to a sign-in/login page, the saved
+        # session is no longer valid (typically the rotating __Secure-*PSIDTS cookies were
+        # lost on save — see AUTHENTICATION.md). Report this clearly instead of failing
+        # later with the misleading "Could not find query input".
+        cur = page.url or ""
+        if "accounts.google.com" in cur or "/login" in cur or "ServiceLogin" in cur:
+            print("  ❌ NotebookLM session is NOT authenticated (redirected to Google sign-in).")
+            print("     Refresh auth, then retry:")
+            print("       • close Brave, then:  python scripts/run.py bootstrap_auth.py --browser brave")
+            print("       • or log into Google in Chrome, then:  ... bootstrap_auth.py --browser chrome")
+            print("       • or interactive login:  python scripts/run.py auth_manager.py setup")
+            context.close()
+            return None
+
         # ip-ks-002: clear the persisted chat first so our reply is the only answer in the
         # conversation (NotebookLM persists chat between sessions; prior discovery answers
         # otherwise get mis-extracted). Non-fatal if the control isn't found.
