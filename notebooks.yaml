@@ -1,7 +1,7 @@
 # NotebookLM Notebook Registry
 # All agents query across the full library (no hardcoded notebook_id).
 # This file is the authoritative routing reference.
-# Updated: 2026-05-17
+# Updated: 2026-06-29
 
 notebooks:
 
@@ -129,6 +129,44 @@ notebooks:
       UI/UX design principles 2025-2026: usability heuristics, Apple HIG, Material Design 3,
       mobile ergonomics, progressive disclosure, cognitive load, WCAG 2.2. Reference for
       frontend design decisions and accessibility compliance.
+
+  - id: mtg-collection-tracking-and-management-ecosystem
+    name: MTG Collection Tracking and Management Ecosystem
+    domains: [mtg, collection-management, inventory, pricing-apis, card-valuation, market-trends, deck-recommendations]
+    best_for: [domain_expert, product_manager_agent, analysis_engineer, efficiency_advisor]
+    description: >
+      Magic: The Gathering collection management ecosystem: scanning tools, inventory
+      tracking, secondary-market valuation, pricing APIs (Scryfall/TCGplayer/JustTCG),
+      serialized cards, and format-specific economic trends. Reference for ManaLedger
+      collection intelligence and MTG card valuation decisions.
+
+  - id: digital-innovation-and-the-three-pillars-of-sustainability
+    name: Digital Innovation and the Three Pillars of Sustainability
+    domains: [sustainability, esg, circular-economy, epr, regenerative-agriculture, ai-for-sustainability]
+    best_for: [domain_expert, risk_advisor, product_manager_agent, evaluator_agent]
+    description: >
+      Sustainability reference: environmental/social/economic pillars, ESG and triple
+      bottom line, circular economy, Extended Producer Responsibility, regenerative
+      agriculture, and digital/AI-enabled resource efficiency.
+
+  - id: mastering-mtg-deck-building-strategy-ratios-and-mana-curves
+    name: Mastering MTG Deck Building Strategy Ratios and Mana Curves
+    domains: [mtg, deck-building, mana-curve, commander, limited, draft, metagame, tournament-policy]
+    best_for: [domain_expert, product_manager_agent, analysis_engineer]
+    description: >
+      Magic: The Gathering deck-building strategy: mana curves, deck composition
+      ratios, Commander staples, strategic frameworks, format metagames, Limited
+      drafting, comprehensive rules, and tournament protocol.
+
+  - id: defending-the-modern-perimeter-api-firewall-and-supply-chain-security
+    name: Defending the Modern Perimeter API Firewall and Supply Chain Security
+    domains: [security, api-security, firewalls, zero-trust, vulnerability-management, supply-chain-security, ssdf, sbom]
+    best_for: [risk_advisor, quality_advisor, domain_expert, reliability_engineer]
+    description: >
+      Modern perimeter defense and software supply-chain security: CISA exposure
+      reduction, risk-based vulnerability remediation, zero trust, firewall strategy,
+      OWASP API risks, service mesh/mTLS controls, NIST SSDF, SBOMs, and component
+      provenance.
 
 routing_strategy:
   default: query_all_notebooks

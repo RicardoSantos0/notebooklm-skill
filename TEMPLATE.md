@@ -1,7 +1,7 @@
 # NotebookLM Canonical Invocation Template
 # Used by all MAS agents that query NotebookLM.
 # Do not modify without updating all agent definitions that reference it.
-# Version: 1.0 | Date: 2026-04-11
+# Version: 1.1 | Date: 2026-06-29
 
 ## When to Query NotebookLM
 
@@ -10,6 +10,9 @@ Query NotebookLM when you need grounded, citation-backed answers on:
 - Governance, evaluation, and project management frameworks
 - Database design, storage, and query patterns
 - ML/DL concepts and implementation patterns
+- Security architecture, API protection, zero trust, and supply-chain controls
+- Sustainability, ESG, circular economy, and AI-enabled resource efficiency
+- MTG collection intelligence, card valuation, and deck-building strategy
 - Any decision where hallucination risk is high or citations are required
 
 Do NOT query for: live system state, project-specific data, or anything already
@@ -48,6 +51,13 @@ Quick routing guide:
 | ML/DL, transformers, PyTorch | `ml-&-deep-learning-comprehensive-reference` |
 | Governance, KPIs, project management | `performance-management-&-project-governance` |
 | Knowledge management, Notion/Zotero | `zotero-notion-python-integration` |
+| Enterprise MAS production patterns | `architecting-multi-agent-systems-for-enterprise-production` |
+| AI engineering, RAG, architecture strategy | `ai-engineering-and-software-architecture-strategies-2026` |
+| UI/UX, accessibility, design systems | `core-principles-of-modern-ui/ux-design` |
+| MTG collection tracking and valuation | `mtg-collection-tracking-and-management-ecosystem` |
+| MTG deck building, formats, rules | `mastering-mtg-deck-building-strategy-ratios-and-mana-curves` |
+| Sustainability, ESG, circular economy | `digital-innovation-and-the-three-pillars-of-sustainability` |
+| API/firewall/zero-trust/supply-chain security | `defending-the-modern-perimeter-api-firewall-and-supply-chain-security` |
 
 ## Pattern for Agents WITHOUT Execute Access (Consultants)
 
