@@ -1,7 +1,7 @@
 # NotebookLM Notebook Registry
 # All agents query across the full library (no hardcoded notebook_id).
 # This file is the authoritative routing reference.
-# Updated: 2026-06-29
+# Updated: 2026-07-23
 
 notebooks:
 
@@ -167,6 +167,23 @@ notebooks:
       reduction, risk-based vulnerability remediation, zero trust, firewall strategy,
       OWASP API risks, service mesh/mTLS controls, NIST SSDF, SBOMs, and component
       provenance.
+
+  - id: ai-model-routing-and-token-optimization-strategies
+    name: AI Model Routing and Token Optimization Strategies
+    domains: [model-routing, token-optimization, prompt-caching, context-management, sqlite, tool-planning, finops, mixture-of-experts]
+    best_for: [master_orchestrator, efficiency_advisor, quality_advisor, evaluator_agent, project_manager_agent]
+    description: >
+      Implementable model-routing and token-efficiency strategies: stable-prefix
+      prompt caching, progressive context disclosure, accuracy-retention testing,
+      trustworthy cost telemetry, tool planning, and SQLite-backed state patterns.
+
+  - id: the-2026-essential-guide-to-mlops-and-etl-tools
+    name: The 2026 Essential Guide to MLOps and ETL Tools
+    domains: [mlops, etl, data-pipelines, model-lifecycle, orchestration, observability, governance]
+    best_for: [domain_expert, project_manager_agent, integration_engineer, reliability_engineer]
+    description: >
+      MLOps and ETL lifecycle practices for pipeline and tool selection,
+      observability, model operations, data movement, and production governance.
 
 routing_strategy:
   default: query_all_notebooks
