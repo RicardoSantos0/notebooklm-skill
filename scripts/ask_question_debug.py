@@ -101,7 +101,8 @@ def ask_notebooklm(question: str, notebook_url: str, headless: bool = True, time
             print("  Re-authenticate with: python auth_manager.py setup")
             return None
 
-        if "notebooklm.google.com" not in current_url:
+        if ("notebooklm.google.com" not in current_url
+                and "notebook.google.com" not in current_url):
             print(f"  WARNING: Unexpected URL: {current_url}")
             # Wait a bit more for any further redirects
             time.sleep(5)

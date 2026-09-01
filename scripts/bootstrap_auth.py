@@ -21,6 +21,7 @@ GOOGLE_DOMAINS = [
     ".google.com", "google.com",
     "accounts.google.com", ".accounts.google.com",
     ".notebooklm.google.com", "notebooklm.google.com",
+    ".notebook.google.com", "notebook.google.com",
     ".google.pt", "accounts.google.pt",
 ]
 

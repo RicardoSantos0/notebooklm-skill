@@ -126,7 +126,8 @@ class AuthManager:
             page.goto("https://notebooklm.google.com", wait_until="domcontentloaded")
 
             # Check if already authenticated
-            if "notebooklm.google.com" in page.url and "accounts.google.com" not in page.url:
+            if (("notebooklm.google.com" in page.url or "notebook.google.com" in page.url)
+                    and "accounts.google.com" not in page.url):
                 print("  ✅ Already authenticated!")
                 self._save_browser_state(context)
                 return True
@@ -138,7 +139,7 @@ class AuthManager:
             try:
                 # Wait for URL to change to NotebookLM (regex ensures it's the actual domain, not a parameter)
                 timeout_ms = int(timeout_minutes * 60 * 1000)
-                page.wait_for_url(re.compile(r"^https://notebooklm\.google\.com/"), timeout=timeout_ms)
+                page.wait_for_url(re.compile(r"^https://(?:notebooklm|notebook)\.google\.com/"), timeout=timeout_ms)
 
                 print(f"  ✅ Login successful!")
 
@@ -272,7 +273,8 @@ class AuthManager:
             page.goto("https://notebooklm.google.com", wait_until="domcontentloaded", timeout=30000)
 
             # Check if we can access NotebookLM
-            if "notebooklm.google.com" in page.url and "accounts.google.com" not in page.url:
+            if (("notebooklm.google.com" in page.url or "notebook.google.com" in page.url)
+                    and "accounts.google.com" not in page.url):
                 print("  ✅ Authentication is valid")
                 return True
             else:

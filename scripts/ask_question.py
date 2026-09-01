@@ -137,7 +137,7 @@ def ask_notebooklm(question: str, notebook_url: str, headless: bool = True) -> s
         # secondary confirmation — give the heavy SPA room and never hard-fail on it (a slow
         # URL-settle should not abort an otherwise-loaded page). (ip-ks-002)
         try:
-            page.wait_for_url(re.compile(r"^https://notebooklm\.google\.com/"), timeout=45000)
+            page.wait_for_url(re.compile(r"^https://(?:notebooklm|notebook)\.google\.com/"), timeout=45000)
         except Exception:
             print("  ⚠️ URL settle slow; continuing (page already navigated)")
 

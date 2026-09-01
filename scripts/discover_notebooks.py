@@ -76,7 +76,7 @@ def discover(headless: bool = True):
                 all_hrefs = page.evaluate("""() => {
                     return Array.from(document.querySelectorAll('a[href*="notebook"]'))
                         .map(a => ({ url: a.href.split('?')[0], name: a.textContent.trim() || 'Unnamed' }))
-                        .filter(x => x.url.includes('notebooklm.google.com'));
+                        .filter(x => x.url.includes('notebooklm.google.com') || x.url.includes('notebook.google.com'));
                 }""")
                 notebooks = all_hrefs
 
