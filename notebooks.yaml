@@ -185,6 +185,23 @@ notebooks:
       MLOps and ETL lifecycle practices for pipeline and tool selection,
       observability, model operations, data movement, and production governance.
 
+  - id: ai-text-detection-and-humanization
+    name: AI Text Detection and Humanization
+    domains: [ai-detection, stylometry, humanization, llm-text, academic-integrity, watermarking, false-positives, writing-quality]
+    best_for: [domain_expert, quality_advisor, risk_advisor, inquirer_agent]
+    description: >
+      Distinguishing human from LLM-generated prose: stylometric, syntactic and lexical
+      differences; detector families (perplexity/burstiness, DetectGPT, Binoculars
+      cross-perplexity, RoBERTa classifiers); watermarking (SynthID-Text and statistical);
+      adversarial paraphrase evasion; and the documented false-positive bias against
+      non-native English and neurodivergent writers. 36 sources, of which 35 are
+      detection/stylometry papers and one is the harshaneel/humanize vendor toolkit.
+      CAUTION: the notebook contains no writing-craft sources, so every prescriptive
+      instruction it returns traces to that single vendor artifact - tag such answers
+      VENDOR, not PRIMARY. Consulted in full for proj-20260831-001-human-writing-skill;
+      the record with provenance tags is at
+      mas/projects/skills/proj-20260831-001-human-writing-skill/research/notebooklm/CONSULTATION.md
+
 routing_strategy:
   default: query_all_notebooks
   note: >
